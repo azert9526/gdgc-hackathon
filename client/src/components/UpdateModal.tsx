@@ -22,7 +22,7 @@ const defaults: ServiceConfig = {
   service_name: 'test-app',
   container_image: 'tenzer/http-echo-test:latest',
   env: { MODEL_PROVIDER: 'chatgpt' },
-  allowed_ips: ['193.226.5.157/32'],
+  allowed_ips: ['0.0.0.0/0'],
 }
 
 const UpdateModal = ({ open, onClose, initial, onSave }: UpdateModalProps) => {

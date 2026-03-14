@@ -4,8 +4,8 @@ import requests
 import base64
 import json
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi import FastAPI, HTTPException, Query, Cookie, Request
+from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
 from pydantic import BaseModel, Field
 
 app = FastAPI()
@@ -127,10 +127,10 @@ class DeployRequest(BaseModel):
     allowed_ips: List[str] = Field(default_factory=list)
     access_token: Optional[str] = None
 
-@app.get("/login")
+@app.get("/oauth-login")
 def login():
     from urllib.parse import urlencode
-    print("DEBUG: /login hit, redirecting to Google...")
+    print("DEBUG: /oauth-login hit, redirecting to Google...")
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
@@ -141,6 +141,49 @@ def login():
     }
     url = AUTH_ENDPOINT + "?" + urlencode(params)
     return RedirectResponse(url)
+
+# @app.get("/oauth/callback")
+# def oauth_callback(code: Optional[str] = None):
+#     print(f"DEBUG: /oauth/callback received code: {code[:5]}..." if code else "DEBUG: No code in callback!")
+#     if not code:
+#         raise HTTPException(status_code=400, detail="missing code")
+
+#     data = {
+#         "code": code,
+#         "client_id": CLIENT_ID,
+#         "client_secret": CLIENT_SECRET,
+#         "redirect_uri": REDIRECT_URI,
+#         "grant_type": "authorization_code"
+#     }
+#     r = requests.post(TOKEN_ENDPOINT, data=data)
+#     print(f"DEBUG: Token exchange status: {r.status_code}")
+#     if r.status_code != 200:
+#         print(f"DEBUG ERROR: {r.text}")
+#         raise HTTPException(status_code=500, detail=f"token exchange failed: {r.text}")
+
+#     token_resp = r.json()
+#     access_token = token_resp.get("access_token")
+    
+#     # User Identification
+#     email = get_email_from_token(access_token)
+    
+#     # Supabase User logic
+#     user_row = None
+#     if supabase:
+#         print(f"DEBUG: Checking/Creating user {email} in database...")
+#         existing = get_user_by_email(email)
+#         if existing:
+#             print(f"DEBUG: User exists with ID: {existing.get('id')}")
+#             user_row = existing
+#         else:
+#             print(f"DEBUG: New user, calling create_user...")
+#             user_row = create_user(email)
+#             print(f"DEBUG: User created successfully: {user_row}")
+#     else:
+#         print("DEBUG: Skipping Supabase User check (Supabase not configured).")
+
+#     return JSONResponse({"token": token_resp, "user": user_row})
+
 
 @app.get("/oauth/callback")
 def oauth_callback(code: Optional[str] = None):
@@ -163,6 +206,7 @@ def oauth_callback(code: Optional[str] = None):
 
     token_resp = r.json()
     access_token = token_resp.get("access_token")
+    expires_in = token_resp.get("expires_in", 3599)
     
     # User Identification
     email = get_email_from_token(access_token)
@@ -182,12 +226,38 @@ def oauth_callback(code: Optional[str] = None):
     else:
         print("DEBUG: Skipping Supabase User check (Supabase not configured).")
 
-    return JSONResponse({"token": token_resp, "user": user_row})
+    # --- SECURE REDIRECT LOGIC ---
+    
+    # Create the redirect response pointing to your frontend dashboard
+    response = RedirectResponse(url="/dashboard")
+
+    # Set the secure HttpOnly cookie for the access token
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,   # Prevents JavaScript from reading the token (XSS protection)
+        secure=False,    # Set to True in production with HTTPS!
+        samesite="lax",  # CSRF protection
+        max_age=expires_in
+    )
+
+    # Set a readable cookie for the frontend to know who is logged in
+    response.set_cookie(
+        key="user_email",
+        value=email,
+        httponly=False,  # React CAN read this one (e.g., to display "Welcome, phymax!")
+        secure=False,
+        samesite="lax",
+        max_age=expires_in
+    )
+
+    return response
 
 @app.post("/deploy")
-def deploy(req: DeployRequest):
+def deploy(req: DeployRequest, request: Request):
     print("\n--- DEPLOYMENT START ---")
-    token = req.access_token
+    token = req.access_token or request.cookies.get("access_token")
+
     if not token:
         raise HTTPException(status_code=400, detail="access_token not provided")
 
@@ -239,9 +309,96 @@ def deploy(req: DeployRequest):
     print("--- DEPLOYMENT FINISHED ---\n")
     return {"status": "success", "service_link": service_link}
 
+
+@app.get("/my-deployments")
+def get_my_deployments(request: Request):
+    token = request.cookies.get("access_token")
+    if not token:
+        print("DEBUG: No token found. Returning empty deployments.")
+        return []
+
+    try:
+        # Identify the user
+        email = get_email_from_token(token)
+        user = get_user_by_email(email)
+        
+        if not user:
+            return []
+
+        # Fetch their specific deployments from Supabase
+        if supabase:
+            res = supabase.table("projects").select("*").eq("user_id", user["id"]).order("created_at", desc=True).execute()
+            return res.data
+        else:
+            return []
+            
+    except Exception as e:
+        print(f"DEBUG ERROR fetching deployments: {e}")
+        return []
+
+
+@app.get("/projects")
+def list_projects(request: Request):
+    # Retrieve the token securely from the HttpOnly cookie
+    token = request.cookies.get("access_token")
+    
+    if not token:
+        # For local testing, if you don't have a token yet, just return the dummy data
+        # so the UI doesn't crash while you are building it.
+        print("DEBUG: No token found. Returning fallback projects.")
+        return ["mate-tester-hak", "prod-cluster-01"]
+
+    headers = {"Authorization": f"Bearer {token}"}
+    url = "https://cloudresourcemanager.googleapis.com/v1/projects"
+    r = requests.get(url, headers=headers)
+    
+    if r.status_code != 200:
+        print(f"DEBUG ERROR: projects.list failed: {r.status_code} {r.text}")
+        return ["mate-tester-hak"] # Fallback
+
+    data = r.json().get("projects", [])
+    
+    # Return just a flat list of strings (project IDs) 
+    # because that is what your React dropdown code expects: projData.map(proj => <option>)
+    simplified = [p.get("projectId") for p in data if p.get("projectId")]
+    
+    return simplified
+
+@app.get("/regions")
+def list_regions():
+    # Return a flat array of strings so React can map over it easily
+    return [
+        "europe-west1", 
+        "us-central1", 
+        "asia-northeast1", 
+        "australia-southeast1", 
+        "northamerica-northeast1"
+    ]
+
 @app.get("/health")
 def health():
     return {"ok": True, "supabase_ready": supabase is not None}
+
+
+@app.get("/{catchall:path}")
+def serve_react_app(catchall: str):
+    # 1. Build the path to the requested file within the 'dist' folder
+    file_path = os.path.join("dist", catchall)
+    
+    # 2. If the exact file exists (e.g., /assets/main.js, /favicon.ico), serve it
+    if catchall and os.path.isfile(file_path):
+        return FileResponse(file_path)
+    
+    # 3. Otherwise, serve index.html to let React Router handle the URL
+    index_path = os.path.join("dist", "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+        
+    # 4. Fallback if the dist folder is missing entirely
+    return JSONResponse(
+        {"error": "Frontend build not found. Make sure 'dist' directory exists."}, 
+        status_code=404
+    )
 
 if __name__ == "__main__":
     import uvicorn

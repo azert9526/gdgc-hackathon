@@ -1,4 +1,4 @@
-import React from 'react'
+// import React from 'react'
 
 const TopNav = () => (
   <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 px-8 backdrop-blur-md">
