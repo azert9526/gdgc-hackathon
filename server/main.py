@@ -4,10 +4,20 @@ from dto import ChatRequest, ChatResponse
 from google import genai
 import os
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+
 
 load_dotenv()
 
 app = FastAPI()
+# Allow your React frontend to talk to the FastAPI backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, change this to your actual frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 gateway = PrivacyProxy()
 
 client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))

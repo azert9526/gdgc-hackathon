@@ -7,7 +7,7 @@ import RegisterPage from './components/RegisterPage'
 import PrivacyServiceCard from './components/PrivacyServiceCard'
 import PrivacyModal from './components/PrivacyModal'
 import LiveServicesPage from './components/LiveServicesPage'
-import ChatPage from './components/ChatPage'
+import ChatPage from './pages/ChatPage.tsx'
 
 const Dashboard = ({ onMainPage, theme, onToggleTheme, onCreateSession }: { onMainPage: () => void; theme: 'light' | 'dark'; onToggleTheme: () => void; onCreateSession: (id: string) => void }) => {
   const [showModal, setShowModal] = useState(false)
@@ -105,7 +105,7 @@ const App = () => {
   }
 
   const ChatRoute = () => {
-    return <ChatPage theme={theme} onToggleTheme={toggleTheme} sessionKey={chatSessionKey} />
+    return <ChatPage theme={theme} onToggleTheme={toggleTheme} />
   }
 
   return (
