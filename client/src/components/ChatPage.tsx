@@ -27,7 +27,7 @@ const ChatPage = ({ theme, onToggleTheme, sessionKey }: ChatPageProps) => {
       } catch {
       }
     }
-    return [{ role: 'assistant', text: 'Welcome to Privacy Guard chat. Type a message below to begin.', time: new Date().toLocaleTimeString() }]
+    return []
   }
 
   const [messages, setMessages] = useState<Message[]>(createInitialMessages)
@@ -45,7 +45,7 @@ const ChatPage = ({ theme, onToggleTheme, sessionKey }: ChatPageProps) => {
       } catch {
       }
     }
-    setMessages([{ role: 'assistant', text: 'Welcome to Privacy Guard chat. Type a message below to begin.', time: new Date().toLocaleTimeString() }])
+    setMessages([])
   }, [storageKey])
 
   useEffect(() => {
@@ -64,10 +64,6 @@ const ChatPage = ({ theme, onToggleTheme, sessionKey }: ChatPageProps) => {
     setInput('')
   }
 
-  const displayInput = input.trim() || " " 
-  const flaggedInput = displayInput
-    .replace(/sk-live-\S+/gi, '<span class="bg-red-100 dark:bg-red-900/40 px-1 rounded">$&</span>')
-    .replace(/\S+@\S+\.\S+/g, '<span class="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">$&</span>')
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">

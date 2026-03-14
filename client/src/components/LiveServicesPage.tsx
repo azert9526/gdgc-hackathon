@@ -1,4 +1,7 @@
 import Sidebar from './Sidebar'
+import { useState } from 'react'
+import UpdateModal from './UpdateModal'
+import type { ServiceConfig } from './UpdateModal'
 
 interface LiveServicesPageProps {
   theme: 'light' | 'dark'
@@ -14,6 +17,19 @@ const services = [
 ]
 
 const LiveServicesPage = ({ theme, onToggleTheme, onDashboardBack, onOpenChatSession }: LiveServicesPageProps) => {
+  const [selectedService, setSelectedService] = useState<string | null>(null)
+  const [openUpdate, setOpenUpdate] = useState(false)
+  const [configs, setConfigs] = useState<Record<string, ServiceConfig>>({})
+
+  const handleOpenMetrics = (title: string) => {
+    setSelectedService(title)
+    setOpenUpdate(true)
+  }
+
+  const handleSaveConfig = (cfg: ServiceConfig) => {
+    if (!selectedService) return
+    setConfigs((s) => ({ ...s, [selectedService]: cfg }))
+  }
 
   return (
     <div className="relative flex min-h-screen w-full overflow-hidden bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
@@ -44,11 +60,17 @@ const LiveServicesPage = ({ theme, onToggleTheme, onDashboardBack, onOpenChatSes
                 </div>
                 <div className="mt-4 flex gap-2">
                   <button onClick={() => onOpenChatSession(service.title)} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90">Chat</button>
-                  <button className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Metrics</button>
+                  <button onClick={() => handleOpenMetrics(service.title)} className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Metrics</button>
                 </div>
               </div>
             ))}
           </div>
+          <UpdateModal
+            open={openUpdate}
+            onClose={() => setOpenUpdate(false)}
+            initial={selectedService ? configs[selectedService] : undefined}
+            onSave={handleSaveConfig}
+          />
         </div>
       </main>
     </div>

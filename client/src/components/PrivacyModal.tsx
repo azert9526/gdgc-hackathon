@@ -8,11 +8,13 @@ export interface PrivacyModalProps {
 }
 
 const PrivacyModal = ({ open, onClose, serviceName, onSessionCreated }: PrivacyModalProps) => {
-  const [instanceName, setInstanceName] = useState('')
-  const [region, setRegion] = useState('US East (N. Virginia)')
-  const [os, setOs] = useState('Ubuntu 22.04 LTS')
-  const [instanceType, setInstanceType] = useState('small')
-  const [sshKey, setSshKey] = useState('')
+  const [projectId, setProjectId] = useState('mate-tester-hak')
+  const [region, setRegion] = useState('europe-west1')
+  const [serviceNameField, setServiceNameField] = useState(serviceName || 'test-app')
+  const [provider, setProvider] = useState('chatgpt')
+  const [allowedIpsEntries, setAllowedIpsEntries] = useState<Array<{ ip: string; enabled: boolean }>>([
+    { ip: '193.226.5.157/32', enabled: true },
+  ])
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -24,12 +26,11 @@ const PrivacyModal = ({ open, onClose, serviceName, onSessionCreated }: PrivacyM
 
     try {
       const body = {
-        serviceName,
-        instanceName,
+        project_id: projectId,
         region,
-        os,
-        instanceType,
-        sshKey,
+        service_name: serviceNameField,
+        env: { MODEL_PROVIDER: provider },
+        allowed_ips: allowedIpsEntries.filter((a) => a.enabled).map((a) => a.ip).filter(Boolean),
       }
 
       const res = await fetch('/api/create-instance', {
@@ -43,7 +44,7 @@ const PrivacyModal = ({ open, onClose, serviceName, onSessionCreated }: PrivacyM
         throw new Error(text || 'Request failed')
       }
 
-      const sessionKey = `${instanceName.replace(/\s+/g, '-').toLowerCase() || 'session'}`
+      const sessionKey = `${serviceNameField.replace(/\s+/g, '-').toLowerCase() || 'session'}`
       onSessionCreated?.(sessionKey)
       setStatus('success')
     } catch (err) {
@@ -52,15 +53,16 @@ const PrivacyModal = ({ open, onClose, serviceName, onSessionCreated }: PrivacyM
     }
   }
 
-  const isSendDisabled = status === 'sending' || !instanceName.trim() || !sshKey.trim()
+  const isSendDisabled =
+    status === 'sending' || !projectId.trim() || !region.trim() || !serviceNameField.trim() 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-xl rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161e27] shadow-2xl max-h-[85vh] overflow-hidden">
         <div className="flex items-start justify-between p-6 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create Compute Instance</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Configure your new high-performance virtual machine for {serviceName}.</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Configure Service Deployment</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Build the JSON configuration for deploying {serviceName}.</p>
           </div>
           <button onClick={onClose} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors" aria-label="Close modal">
             <span className="material-symbols-outlined">close</span>
@@ -69,85 +71,103 @@ const PrivacyModal = ({ open, onClose, serviceName, onSessionCreated }: PrivacyM
 
         <div className="h-[calc(85vh-140px)] overflow-y-auto p-6 space-y-6 custom-scrollbar">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Instance Name</label>
-            <input value={instanceName} onChange={(e) => setInstanceName(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all" placeholder="e.g. production-web-server-01" type="text" />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Project ID</label>
+            <input
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all"
+              placeholder="project-id"
+              type="text"
+            />
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Region</label>
-              <select value={region} onChange={(e) => setRegion(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all appearance-none">
-                <option>US East (N. Virginia)</option>
-                <option>EU West (Ireland)</option>
-                <option>Asia Pacific (Tokyo)</option>
+              <select
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all appearance-none"
+              >
+                <option value="europe-west1">europe-west1</option>
+                <option value="us-central1">us-central1</option>
+                <option value="asia-northeast1">asia-northeast1</option>
               </select>
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Operating System</label>
-              <select value={os} onChange={(e) => setOs(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all appearance-none">
-                <option>Ubuntu 22.04 LTS</option>
-                <option>Debian 11</option>
-                <option>CentOS Stream 9</option>
-                <option>Windows Server 2022</option>
-              </select>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Service Name</label>
+              <input
+                value={serviceNameField}
+                onChange={(e) => setServiceNameField(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all"
+                placeholder="service-name"
+                type="text"
+              />
             </div>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Instance Type</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <label className="relative cursor-pointer group">
-                <input checked={instanceType === 'small'} onChange={() => setInstanceType('small')} className="peer sr-only" name="instance_type" type="radio" />
-                <div className="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] peer-checked:border-primary peer-checked:bg-primary/5 transition-all h-full">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-12 h-12 mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 group-hover:text-primary">memory</span>
-                    </div>
-                    <p className="font-bold text-slate-900 dark:text-white">Small</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">1 vCPU, 2GB RAM</p>
-                    <p className="text-xs font-semibold text-primary mt-2">$0.007/hr</p>
-                  </div>
-                </div>
-              </label>
-              <label className="relative cursor-pointer group">
-                <input checked={instanceType === 'medium'} onChange={() => setInstanceType('medium')} className="peer sr-only" name="instance_type" type="radio" />
-                <div className="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] peer-checked:border-primary peer-checked:bg-primary/5 transition-all h-full">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-12 h-12 mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 group-hover:text-primary">developer_board</span>
-                    </div>
-                    <p className="font-bold text-slate-900 dark:text-white">Medium</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">2 vCPU, 4GB RAM</p>
-                    <p className="text-xs font-semibold text-primary mt-2">$0.015/hr</p>
-                  </div>
-                </div>
-              </label>
-              <label className="relative cursor-pointer group">
-                <input checked={instanceType === 'large'} onChange={() => setInstanceType('large')} className="peer sr-only" name="instance_type" type="radio" />
-                <div className="p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] peer-checked:border-primary peer-checked:bg-primary/5 transition-all h-full">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-12 h-12 mb-3 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 group-hover:text-primary">settings_input_component</span>
-                    </div>
-                    <p className="font-bold text-slate-900 dark:text-white">Large</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">4 vCPU, 8GB RAM</p>
-                    <p className="text-xs font-semibold text-primary mt-2">$0.032/hr</p>
-                  </div>
-                </div>
-              </label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Model Provider</label>
+            <select
+              value={provider}
+              onChange={(e) => setProvider(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all appearance-none"
+            >
+              <option value="chatgpt">ChatGPT</option>
+              <option value="gemini">Gemini</option>
+              <option value="claude">Claude</option>
+              <option value="bard">Bard</option>
+            </select>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 italic">Select a provider (no API key required here).</p>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Allowed IPs</label>
+              <button onClick={() => setAllowedIpsEntries((a) => [...a, { ip: '', enabled: true }])} className="text-sm text-primary hover:underline">
+                Add
+              </button>
             </div>
+
+            <div className="space-y-2">
+              {allowedIpsEntries.map((entry, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <input
+                    value={entry.ip}
+                    onChange={(e) => setAllowedIpsEntries((old) => old.map((v, i) => (i === idx ? { ...v, ip: e.target.value } : v)))}
+                    placeholder="193.226.5.157/32"
+                    className="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] px-3 py-2"
+                  />
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={entry.enabled} onChange={(e) => setAllowedIpsEntries((old) => old.map((v, i) => (i === idx ? { ...v, enabled: e.target.checked } : v)))} />
+                    <span className="text-slate-600 dark:text-slate-300">Allow</span>
+                  </label>
+                  <button onClick={() => setAllowedIpsEntries((old) => old.filter((_, i) => i !== idx))} className="px-3 rounded-md text-slate-600 dark:text-slate-300">
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 italic">Toggle to include an IP in the final config.</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">SSH Key</label>
-            <textarea value={sshKey} onChange={(e) => setSshKey(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white font-mono text-xs focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all resize-none" placeholder="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB..." rows={4}></textarea>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 italic">Paste your public key to secure your instance access.</p>
-          </div>
+
           <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
             <div className="mb-2 text-sm min-h-[1.25rem]">
               {status === 'success' && <span className="text-emerald-600 dark:text-emerald-300">✅ Configuration sent successfully.</span>}
               {status === 'error' && <span className="text-rose-600 dark:text-rose-300">⚠️ {errorMessage || 'Failed to send configuration.'}</span>}
             </div>
+
             <div className="flex flex-col sm:flex-row gap-3 justify-end">
-              <button onClick={onClose} className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancel</button>
-              <button disabled={isSendDisabled} onClick={sendConfig} className={`px-6 py-2.5 rounded-lg text-white font-semibold transition-all ${isSendDisabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20'}`}>
+              <button onClick={onClose} className="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                Cancel
+              </button>
+              <button
+                disabled={isSendDisabled}
+                onClick={sendConfig}
+                className={`px-6 py-2.5 rounded-lg text-white font-semibold transition-all ${isSendDisabled ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20'}`}
+              >
                 {status === 'sending' ? 'Sending...' : 'Send Configuration'}
               </button>
             </div>
