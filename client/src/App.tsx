@@ -65,7 +65,6 @@ const Dashboard = ({ onMainPage, theme, onToggleTheme, onCreateSession }: { onMa
 
 const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
-  const [chatSessionKey, setChatSessionKey] = useState('default-session')
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -90,14 +89,12 @@ const App = () => {
 
   const DashboardRoute = () => {
     const navigate = useNavigate()
-    return <Dashboard onMainPage={() => navigate('/mainpage')} theme={theme} onToggleTheme={toggleTheme} onCreateSession={setChatSessionKey} />
+    return <Dashboard onMainPage={() => navigate('/mainpage')} theme={theme} onToggleTheme={toggleTheme} />
   }
 
   const LiveServicesRoute = () => {
     const navigate = useNavigate()
-    const openChatSession = (serviceName: string) => {
-      const key = serviceName.replace(/\s+/g, '-').toLowerCase()
-      setChatSessionKey(key)
+    const openChatSession = () => {
       navigate('/chat')
     }
 
@@ -105,7 +102,7 @@ const App = () => {
   }
 
   const ChatRoute = () => {
-    return <ChatPage theme={theme} onToggleTheme={toggleTheme} sessionKey={chatSessionKey} />
+    return <ChatPage theme={theme} onToggleTheme={toggleTheme} />
   }
 
   return (
