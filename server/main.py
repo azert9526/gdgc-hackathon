@@ -5,7 +5,7 @@ from google import genai
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import JSONResponse, FileResponse
 
 load_dotenv()
 
@@ -20,7 +20,7 @@ app.add_middleware(
 )
 gateway = PrivacyProxy()
 
-client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+client = genai.Client(api_key=os.getenv('API_KEY'))
 
 def call_llm(masked_prompt: str) -> str:
     try:

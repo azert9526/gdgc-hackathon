@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Header from '../components/chat/Header.tsx';
 import ChatBox from '../components/chat/ChatBox.tsx';
-import type {Message, ThemeProps} from '../types/chat';
+import type { Message, ThemeProps } from '../types/chat';
 
 const ChatPage = ({ theme, onToggleTheme }: ThemeProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -13,9 +13,10 @@ const ChatPage = ({ theme, onToggleTheme }: ThemeProps) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // <--- Crucial for your auth cookies!
         body: JSON.stringify({ prompt: text })
       });
 
@@ -51,10 +52,10 @@ const ChatPage = ({ theme, onToggleTheme }: ThemeProps) => {
   };
 
   return (
-      <div className="h-[calc(100vh-84px)]">
-        <Header theme={theme} onToggleTheme={onToggleTheme} />
-        <ChatBox messages={messages} onSendMessage={handleSendMessage} isLoading={isLoading} />
-      </div>
+    <div className="h-[calc(100vh-84px)]">
+      <Header theme={theme} onToggleTheme={onToggleTheme} />
+      <ChatBox messages={messages} onSendMessage={handleSendMessage} isLoading={isLoading} />
+    </div>
   );
 };
 

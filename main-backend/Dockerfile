@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY platform_backend.py /app/platform_backend.py
 
+COPY ./dist /app/dist
+
 RUN pip install --no-cache-dir fastapi uvicorn requests pydantic supabase
 
 ENV PORT=8080

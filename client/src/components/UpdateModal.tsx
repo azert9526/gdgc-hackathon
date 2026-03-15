@@ -16,11 +16,12 @@ export interface UpdateModalProps {
   onSave?: (cfg: ServiceConfig) => void
 }
 
+// to change if used
 const defaults: ServiceConfig = {
   project_id: 'mate-tester-hak',
   region: 'europe-west1',
   service_name: 'test-app',
-  container_image: 'tenzer/http-echo-test:latest',
+  container_image: 'docker.io/bluegalaxy4012/piighost:v1',
   env: { MODEL_PROVIDER: 'chatgpt' },
   allowed_ips: ['0.0.0.0/0'],
 }

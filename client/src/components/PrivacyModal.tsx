@@ -82,7 +82,7 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
         project_id: projectId,
         region: region,
         service_name: cleanServiceName,
-        container_image: "tenzer/http-echo-test", // Hardcoded as requested
+        container_image: "docker.io/bluegalaxy4012/piighost:v1", // Hardcoded as requested
         env: { 
           API_KEY: apiKey 
         },

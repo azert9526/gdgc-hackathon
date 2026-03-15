@@ -1,21 +1,24 @@
-FROM node:20 AS frontend-build
+FROM node:slim AS frontend-build
 
 WORKDIR /frontend
 
-COPY image-client/image-client/package*.json ./
-RUN npm install
+COPY image-client/package*.json ./
+RUN npm install --legacy-peer-dep
 
-COPY image-client/image-client .
+COPY image-client .
 RUN npm run build
 
 FROM python:3.12-slim
 
 WORKDIR /backend
-COPY server/requirements.txt .
+
+COPY ./requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY server ./server
+RUN python -m spacy download en_core_web_lg
 
-COPY --from=frontend-build /frontend/dist ./frontend
+COPY ./PrivacyProxy.py ./main.py ./dto.py ./
 
-CMD ["uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8080"]
+COPY --from=frontend-build /frontend/dist ./dist
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

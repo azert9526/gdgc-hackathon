@@ -91,7 +91,7 @@ def region_run_endpoint(region: str) -> str:
 def auth_headers(token: str) -> Dict[str, str]:
     return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-def create_knative_service_body(service_name: str, container_image: str, env: Dict[str, str]) -> Dict:
+def create_knative_service_body(service_name: str, container_image: str, env: Dict[str, str], memory: str = "2048Mi", cpu: str = "1") -> Dict:
     env_items = [{"name": k, "value": v} for k, v in env.items()]
     return {
         "apiVersion": "serving.knative.dev/v1",
@@ -99,7 +99,21 @@ def create_knative_service_body(service_name: str, container_image: str, env: Di
         "metadata": {"name": service_name},
         "spec": {
             "template": {
-                "spec": {"containers": [{"image": container_image, "env": env_items}]},
+                "spec": {
+                    "containers": [
+                        {
+                            "image": container_image,
+                            "env": env_items,
+                            # --- NEW RESOURCE LIMITS BLOCK ---
+                            "resources": {
+                                "limits": {
+                                    "memory": memory
+                                }
+                            }
+                            # ---------------------------------
+                        }
+                    ]
+                }
             }
         },
     }
@@ -126,6 +140,7 @@ class DeployRequest(BaseModel):
     env: Dict[str, str] = Field(default_factory=dict)
     allowed_ips: List[str] = Field(default_factory=list)
     access_token: Optional[str] = None
+    memory: str = "2048Mi"
 
 @app.get("/oauth-login")
 def login():
