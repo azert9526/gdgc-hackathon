@@ -9,6 +9,11 @@ interface LoginPageProps {
 
 const LoginPage = ({ onSignIn, onRegister, theme, onToggleTheme }: LoginPageProps) => {
 
+  const handleGoogleLogin = () => {
+    // Redirects the browser to your Python backend's OAuth trigger
+    window.location.href = '/oauth-login'; 
+  };
+
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
       <div className="flex min-h-screen w-full flex-col lg:flex-row">
@@ -19,7 +24,7 @@ const LoginPage = ({ onSignIn, onRegister, theme, onToggleTheme }: LoginPageProp
             <div className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary text-white shadow-2xl shadow-primary/40">
               <span className="material-symbols-outlined !text-4xl">cloud_queue</span>
             </div>
-            <h1 className="text-5xl font-black tracking-tight text-white mb-6">Welcome to <br /><span className="text-primary">CloudPlatform</span></h1>
+            <h1 className="text-5xl font-black tracking-tight text-white mb-6">Welcome to <br /><span className="text-primary">PIIGhost</span></h1>
             <p className="text-slate-300 text-lg max-w-md mx-auto leading-relaxed">Experience the next generation of cloud computing. Secure, scalable, and lightning fast infrastructure for modern developers.</p>
           </div>
           <div className="absolute bottom-10 left-10 z-20 flex items-center gap-4">
@@ -28,7 +33,6 @@ const LoginPage = ({ onSignIn, onRegister, theme, onToggleTheme }: LoginPageProp
               <div className="w-10 h-10 rounded-full border-2 border-background-dark bg-slate-500"></div>
               <div className="w-10 h-10 rounded-full border-2 border-background-dark bg-slate-600"></div>
             </div>
-            <p className="text-sm text-slate-300 font-medium">Trusted by 10k+ developers</p>
           </div>
         </div>
 
@@ -36,7 +40,7 @@ const LoginPage = ({ onSignIn, onRegister, theme, onToggleTheme }: LoginPageProp
           <div className="mx-auto w-full max-w-sm">
             <div className="lg:hidden mb-12 flex items-center gap-3">
               <div className="p-2 bg-primary rounded-lg text-white"><span className="material-symbols-outlined">cloud_queue</span></div>
-              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">CloudPlatform</span>
+              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">PIIGhost</span>
             </div>
             <div className="mb-10 flex items-center justify-between">
               <div>
@@ -49,10 +53,10 @@ const LoginPage = ({ onSignIn, onRegister, theme, onToggleTheme }: LoginPageProp
               
             </div>
             <div className="grid grid-cols-2 gap-4 mb-8">
-              <button className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 py-2.5 px-4 text-sm font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800">
+              <button className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 py-2.5 px-4 text-sm font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800" type="button" onClick={handleGoogleLogin}>
                 Google
               </button>
-              <button className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 py-2.5 px-4 text-sm font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800">
+              <button className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 py-2.5 px-4 text-sm font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800" type="button" onClick={handleGoogleLogin}>
                 GitHub
               </button>
             </div>

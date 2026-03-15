@@ -1,3 +1,5 @@
+main-backend/*.sh
+
 # --- System & OS ---
 .DS_Store
 Thumbs.db

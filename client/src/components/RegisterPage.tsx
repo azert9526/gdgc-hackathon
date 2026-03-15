@@ -16,22 +16,22 @@ const RegisterPage = ({ onSignUp, onGoToLogin, theme, onToggleTheme }: RegisterP
           <div className="relative z-10 flex flex-col justify-between p-16 w-full">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-lg"><span className="material-symbols-outlined text-white text-2xl">cloud</span></div>
-              <h1 className="text-2xl font-bold tracking-tight text-white">CloudPlatform</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-white">PIIGhost</h1>
             </div>
             <div className="max-w-md">
               <h2 className="text-4xl font-black text-white leading-tight mb-6">Scale your vision to new heights.</h2>
-              <p className="text-lg text-slate-300 leading-relaxed mb-8">"CloudPlatform has revolutionized our deployment pipeline. We went from weekly releases to daily updates within a month."</p>
+              <p className="text-lg text-slate-300 leading-relaxed mb-8">"PIIGhost has revolutionized our deployment pipeline. We went from weekly releases to daily updates within a month."</p>
               <div className="flex items-center gap-4">
               </div>
             </div>
-            <div className="flex gap-4 text-slate-400 text-sm"><span>© 2024 CloudPlatform Inc.</span><a className="hover:text-primary" href="#">Terms</a><a className="hover:text-primary" href="#">Privacy</a></div>
+            <div className="flex gap-4 text-slate-400 text-sm"><span>© 2024 PIIGhost Inc.</span><a className="hover:text-primary" href="#">Terms</a><a className="hover:text-primary" href="#">Privacy</a></div>
           </div>
         </div>
 
         <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-background-light dark:bg-background-dark">
           <div className="w-full max-w-[440px] flex flex-col gap-8">
             <div className="flex items-center justify-between">
-              <div className="lg:hidden flex items-center gap-3 mb-4"><div className="w-8 h-8 bg-primary flex items-center justify-center rounded-lg"><span className="material-symbols-outlined text-white text-xl">cloud</span></div><h1 className="text-xl font-bold tracking-tight dark:text-white">CloudPlatform</h1></div>
+              <div className="lg:hidden flex items-center gap-3 mb-4"><div className="w-8 h-8 bg-primary flex items-center justify-center rounded-lg"><span className="material-symbols-outlined text-white text-xl">cloud</span></div><h1 className="text-xl font-bold tracking-tight dark:text-white">PIIGhost</h1></div>
               <button onClick={onToggleTheme} className="rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
                 {theme === 'light' ? 'Dark' : 'Light'}
               </button>

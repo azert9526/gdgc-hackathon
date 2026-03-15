@@ -5,7 +5,7 @@ from google import genai
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import JSONResponse, FileResponse
 
 load_dotenv()
 
@@ -20,7 +20,7 @@ app.add_middleware(
 )
 gateway = PrivacyProxy()
 
-client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+client = genai.Client(api_key=os.getenv('API_KEY'))
 
 def call_llm(masked_prompt: str) -> str:
     try:
@@ -52,3 +52,23 @@ async def chat_endpoint(request: ChatRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/{catchall:path}")
+def serve_react_app(catchall: str):
+    # 1. Build the path to the requested file within the 'dist' folder
+    file_path = os.path.join("dist", catchall)
+
+    # 2. If the exact file exists (e.g., /assets/main.js, /favicon.ico), serve it
+    if catchall and os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    # 3. Otherwise, serve index.html to let React Router handle the URL
+    index_path = os.path.join("dist", "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+
+    # 4. Fallback if the dist folder is missing entirely
+    return JSONResponse(
+        {"error": "Frontend build not found. Make sure 'dist' directory exists."},
+        status_code=404
+    )
