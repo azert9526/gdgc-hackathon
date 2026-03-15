@@ -3,7 +3,7 @@ FROM node:slim AS frontend-build
 WORKDIR /frontend
 
 COPY image-client/package*.json ./
-RUN npm install --legacy-peer-dep
+RUN npm ci --legacy-peer-dep
 
 COPY image-client .
 RUN npm run build
@@ -13,11 +13,9 @@ FROM python:3.12-slim
 WORKDIR /backend
 
 COPY ./requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && python -m spacy download en_core_web_lg
 
-RUN python -m spacy download en_core_web_lg
-
-COPY ./PrivacyProxy.py ./main.py ./dto.py ./
+COPY ./PrivacyProxy.py ./main.py ./dto.py ./secretapi.py ./
 
 COPY --from=frontend-build /frontend/dist ./dist
 

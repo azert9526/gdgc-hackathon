@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
+from secretapi import API_KEY
 
 load_dotenv()
 
@@ -20,12 +21,15 @@ app.add_middleware(
 )
 gateway = PrivacyProxy()
 
-client = genai.Client(api_key=os.getenv('API_KEY'))
+model_name = "gemini-2.5-flash"
+api_key = os.getenv('API_KEY', API_KEY)
+client = genai.Client(api_key=api_key)
+
 
 def call_llm(masked_prompt: str) -> str:
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model=model_name,
             contents=masked_prompt
         )
         return response.text

@@ -19,8 +19,12 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
   const [projectId, setProjectId] = useState('')
   const [region, setRegion] = useState('')
   const [serviceName, setServiceName] = useState('')
-  const [apiKey, setApiKey] = useState('')
   const [allowedIps, setAllowedIps] = useState('0.0.0.0/0')
+  
+  // --- MODEL SELECTION STATES ---
+  const [modelName, setModelName] = useState('google/gemini-2.5-flash')
+  const [useOwnKey, setUseOwnKey] = useState(false)
+  const [apiKey, setApiKey] = useState('')
   
   // Status states
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
@@ -33,15 +37,13 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
     const fetchDependencies = async () => {
       setIsLoadingDeps(true)
       try {
-        // Fetch projects
         const projRes = await fetch('/projects', { credentials: 'same-origin' })
         const projData = projRes.ok ? await projRes.json() : ['mate-tester-hak']
         setAvailableProjects(projData)
         if (projData.length > 0) setProjectId(projData[0])
 
-        // Fetch regions
         const regRes = await fetch('/regions')
-        const regData = regRes.ok ? await regRes.json() : ['europe-west1', 'us-central1'] // Fallback if endpoint missing
+        const regData = regRes.ok ? await regRes.json() : ['europe-west1', 'us-central1']
         setAvailableRegions(regData)
         if (regData.length > 0) setRegion(regData[0])
       } catch (err) {
@@ -63,29 +65,27 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
     setErrorMessage('')
 
     try {
-      // Parse the comma-separated IPs into an array
       const parsedIps = allowedIps
         .split(',')
         .map((ip) => ip.trim())
         .filter(Boolean)
 
-      // Make sure service name is valid (lowercase alphanumeric and hyphens usually required for Cloud Run)
       const cleanServiceName = serviceName.toLowerCase().replace(/[^a-z0-9]/g, '')
-
-      // Retrieve the token (Assuming you save it to localStorage on login)
-      // *NOTE*: If you used the HttpOnly cookie method we discussed earlier, 
-      // you won't be able to read it here. You'll need to update your Python backend 
-      // to read the token from the request cookies instead of the JSON body!
       const token = localStorage.getItem('access_token') || '' 
+
+      // --- NEW ENV VAR LOGIC ---
+      // MODEL_NAME is always sent. API_KEY is sent only if the user checked the box.
+      const envVars: Record<string, string> = {
+        MODEL_NAME: modelName,
+        API_KEY: useOwnKey ? apiKey : ''
+      }
 
       const body = {
         project_id: projectId,
         region: region,
         service_name: cleanServiceName,
-        container_image: "docker.io/bluegalaxy4012/piighost:v1", // Hardcoded as requested
-        env: { 
-          API_KEY: apiKey 
-        },
+        container_image: "docker.io/bluegalaxy4012/piighost:v4",
+        env: envVars,
         allowed_ips: parsedIps,
         access_token: token
       }
@@ -110,7 +110,6 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
         window.open(data.service_link, '_blank', 'noopener,noreferrer')
       }
       
-      // Close modal after success
       setTimeout(() => {
         onClose()
         navigate('/live-services')
@@ -128,7 +127,7 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
     !projectId || 
     !region || 
     !serviceName.trim() || 
-    !apiKey.trim()
+    (useOwnKey && !apiKey.trim())
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
@@ -148,8 +147,8 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
           
+          {/* Form Fields: Project & Region */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Project ID Dropdown */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Project ID</label>
               <select
@@ -164,7 +163,6 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
               </select>
             </div>
 
-            {/* Region Dropdown */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Region</label>
               <select
@@ -180,7 +178,6 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
             </div>
           </div>
 
-          {/* Service Name */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Service Name</label>
             <input
@@ -193,20 +190,67 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
             <p className="mt-1 text-xs text-slate-500">Letters and numbers only.</p>
           </div>
 
-          {/* API Key (Environment Variable) */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">API Key <span className="text-rose-500">*</span></label>
-            <input
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all"
-              placeholder="sk-..."
-              type="password"
-              required
-            />
+          {/* --- MODEL CONFIGURATION SECTION --- */}
+          <div className="space-y-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1c252e]/50 p-4">
+            
+            {/* 1. The Model Dropdown (Always visible) */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Model Name</label>
+              <select
+                value={modelName}
+                onChange={(e) => setModelName(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all appearance-none"
+              >
+                <optgroup label="Google">
+                  <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                  <option value="google/gemini-2.5-pro">Gemini 2.5 Pro</option>
+                </optgroup>
+                <optgroup label="OpenAI">
+                  <option value="openai/gpt-4o">GPT-4o</option>
+                  <option value="openai/o1-preview">o1-preview</option>
+                </optgroup>
+                <optgroup label="Anthropic">
+                  <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                  <option value="anthropic/claude-3-opus">Claude 3 Opus</option>
+                </optgroup>
+                <optgroup label="Meta">
+                  <option value="meta-llama/llama-3.1-405b-instruct">Llama 3.1 (405B)</option>
+                  <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 (70B)</option>
+                </optgroup>
+              </select>
+            </div>
+
+            {/* 2. The API Key Checkbox */}
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+              <input
+                id="own-key-checkbox"
+                type="checkbox"
+                checked={useOwnKey}
+                onChange={(e) => setUseOwnKey(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary bg-white dark:bg-[#1c252e]"
+              />
+              <label htmlFor="own-key-checkbox" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
+                Provide your own API Key
+              </label>
+            </div>
+
+            {/* 3. The API Key Input (Conditionally rendered) */}
+            {useOwnKey && (
+              <div className="pt-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">API Key <span className="text-rose-500">*</span></label>
+                <input
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1c252e] text-slate-900 dark:text-white focus:ring-primary focus:border-primary px-4 py-3 outline-none transition-all"
+                  placeholder="sk-or-v1-..."
+                  type="password"
+                  required={useOwnKey}
+                />
+                <p className="mt-2 text-xs text-slate-500">Your key will be securely passed to the container.</p>
+              </div>
+            )}
           </div>
 
-          {/* Allowed IPs */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Allowed IPs</label>
             <textarea
@@ -252,4 +296,4 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
   )
 }
 
-export default PrivacyModal
+export default PrivacyModal 

@@ -124,7 +124,7 @@ const App = () => {
   }
 
   const ChatRoute = () => {
-    return <ChatPage theme={theme} onToggleTheme={toggleTheme} />
+    return <ChatPage theme={theme} onToggleTheme={toggleTheme} sessionKey={chatSessionKey}/>
   }
 
   return (  
@@ -136,7 +136,7 @@ const App = () => {
         <Route path="/dashboard" element={<DashboardRoute />} />
         <Route path="/live-services" element={<LiveServicesRoute />} />
         <Route path="/chat" element={<ChatRoute />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/mainpage" replace />} />
       </Routes>
     </BrowserRouter>
   )

@@ -3,6 +3,7 @@ presidio-anonymizer
 spacy
 fastapi
 phonenumbers
-google-genai
 uvicorn
 dotenv
+requests
+google-genai
