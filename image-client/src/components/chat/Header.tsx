@@ -9,8 +9,8 @@ const Header = ({ theme, onToggleTheme }: ThemeProps) => {
                     <span className="material-symbols-outlined text-xl">shield_person</span>
                 </div>
                 <div>
-                    <h2 className="font-bold text-slate-900 dark:text-white">Privacy Guard</h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Zero-Trust Chat</p>
+                    <h2 className="font-bold text-slate-900 dark:text-white">PIIGhost</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Private Chat</p>
                 </div>
             </div>
             <div className="flex items-center gap-3">

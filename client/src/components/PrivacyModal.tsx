@@ -84,7 +84,7 @@ const PrivacyModal = ({ open, onClose, onSessionCreated }: PrivacyModalProps) =>
         project_id: projectId,
         region: region,
         service_name: cleanServiceName,
-        container_image: "docker.io/bluegalaxy4012/piighost:v4",
+        container_image: "docker.io/bluegalaxy4012/piighost:v5",
         env: envVars,
         allowed_ips: parsedIps,
         access_token: token

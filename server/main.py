@@ -1,30 +1,29 @@
-from PrivacyProxy import PrivacyProxy
-from fastapi import FastAPI, HTTPException
-from dto import ChatRequest, ChatResponse
-from google import genai
 import os
+from google import genai
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
+
+from PrivacyProxy import PrivacyProxy
+from dto import ChatRequest, ChatResponse
 from secretapi import API_KEY
 
 load_dotenv()
 
 app = FastAPI()
-# Allow your React frontend to talk to the FastAPI backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, change this to your actual frontend domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-gateway = PrivacyProxy()
 
+gateway = PrivacyProxy()
 model_name = "gemini-2.5-flash"
 api_key = os.getenv('API_KEY', API_KEY)
 client = genai.Client(api_key=api_key)
-
 
 def call_llm(masked_prompt: str) -> str:
     try:
@@ -36,14 +35,11 @@ def call_llm(masked_prompt: str) -> str:
     except Exception as e:
         return f"LLM Error: {str(e)}"
 
-
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
         masked_prompt, mapping_dict = gateway.mask_prompt(request.prompt)
-
         llm_raw_response = call_llm(masked_prompt)
-
         final_response = gateway.unmask_response(llm_raw_response, mapping_dict)
 
         return ChatResponse(
@@ -53,26 +49,20 @@ async def chat_endpoint(request: ChatRequest):
             final_response=final_response,
             redacted_entities=mapping_dict
         )
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/{catchall:path}")
 def serve_react_app(catchall: str):
-    # 1. Build the path to the requested file within the 'dist' folder
     file_path = os.path.join("dist", catchall)
-
-    # 2. If the exact file exists (e.g., /assets/main.js, /favicon.ico), serve it
     if catchall and os.path.isfile(file_path):
         return FileResponse(file_path)
-
-    # 3. Otherwise, serve index.html to let React Router handle the URL
+    
     index_path = os.path.join("dist", "index.html")
     if os.path.isfile(index_path):
         return FileResponse(index_path)
 
-    # 4. Fallback if the dist folder is missing entirely
     return JSONResponse(
-        {"error": "Frontend build not found. Make sure 'dist' directory exists."},
+        {"error": "Frontend build not found."},
         status_code=404
     )

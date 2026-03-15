@@ -20,7 +20,6 @@ class PrivacyProxy:
 
     def mask_prompt(self, text: str):
         results = self.analyzer.analyze(text=text, entities=self.target_entities, language="en")
-
         results.sort(key=lambda x: x.start, reverse=True)
 
         masked_text = text
@@ -35,15 +34,12 @@ class PrivacyProxy:
             entity_counts[entity_type] += 1
 
             mapping_dict[tag] = original_value
-
             masked_text = masked_text[:res.start] + tag + masked_text[res.end:]
 
         return masked_text, mapping_dict
 
     def unmask_response(self, llm_response: str, mapping_dict: dict):
         unmasked_text = llm_response
-
         for tag, original_value in mapping_dict.items():
             unmasked_text = unmasked_text.replace(tag, original_value)
-
         return unmasked_text

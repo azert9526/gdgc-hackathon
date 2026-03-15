@@ -21,7 +21,7 @@ const defaults: ServiceConfig = {
   project_id: 'mate-tester-hak',
   region: 'europe-west1',
   service_name: 'test-app',
-  container_image: 'docker.io/bluegalaxy4012/piighost:v4',
+  container_image: 'docker.io/bluegalaxy4012/piighost:v5',
   env: { MODEL_PROVIDER: 'google/gemini-2.5-flash' },
   allowed_ips: ['0.0.0.0/0'],
 }

@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY platform_backend.py /app/platform_backend.py
+COPY *.py /app/
 
 COPY ./dist /app/dist
 
