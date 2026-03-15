@@ -32,7 +32,7 @@ const LandingPage = ({ onDashboardClick, theme, onToggleTheme }: LandingPageProp
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              New: Global Edge Engine v2.0
+              New: Global Defense Engine
             </div>
 
             <h1 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
