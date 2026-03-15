@@ -1,3 +1,4 @@
+
 interface LoginPageProps {
   onSignIn: () => void
   onRegister: () => void
@@ -5,7 +6,9 @@ interface LoginPageProps {
   onToggleTheme: () => void
 }
 
+
 const LoginPage = ({ onSignIn, onRegister, theme, onToggleTheme }: LoginPageProps) => {
+
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
       <div className="flex min-h-screen w-full flex-col lg:flex-row">
@@ -43,6 +46,7 @@ const LoginPage = ({ onSignIn, onRegister, theme, onToggleTheme }: LoginPageProp
               <button onClick={onToggleTheme} className="rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
                 {theme === 'light' ? 'Dark' : 'Light'}
               </button>
+              
             </div>
             <div className="grid grid-cols-2 gap-4 mb-8">
               <button className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 py-2.5 px-4 text-sm font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800">

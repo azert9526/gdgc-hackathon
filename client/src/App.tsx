@@ -64,11 +64,23 @@ const Dashboard = ({ onMainPage, theme, onToggleTheme, onCreateSession }: { onMa
 }
 
 const App = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    try {
+      const saved = localStorage.getItem('theme')
+      if (saved === 'light' || saved === 'dark') return saved
+    } catch (e) {}
+    try {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'
+    } catch (e) {}
+    return 'light'
+  })
   const [chatSessionKey, setChatSessionKey] = useState('default-session')
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
+    try {
+      localStorage.setItem('theme', theme)
+    } catch (e) {}
   }, [theme])
 
   const toggleTheme = () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))

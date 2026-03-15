@@ -1,14 +1,58 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Header from '../components/chat/Header.tsx';
 import ChatBox from '../components/chat/ChatBox.tsx';
-import type {Message, ThemeProps} from '../types/chat';
+import type { Message, ThemeProps } from '../types/chat';
 
-const ChatPage = ({ theme, onToggleTheme }: ThemeProps) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+interface ChatPageProps extends ThemeProps {
+  sessionKey: string;
+}
+
+const ChatPage = ({ theme, onToggleTheme, sessionKey }: ChatPageProps) => {
+  const storageKey = `privacy-chat-${sessionKey}`;
+
+  const createInitialMessages = (): Message[] => {
+    const raw = localStorage.getItem(storageKey);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as Message[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (error) {
+        console.error("Failed to parse local storage messages", error);
+      }
+    }
+    return [];
+  };
+
+  const [messages, setMessages] = useState<Message[]>(createInitialMessages);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const raw = localStorage.getItem(storageKey);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as Message[];
+        setMessages(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        setMessages([]);
+      }
+    } else {
+      setMessages([]);
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(messages));
+  }, [messages, storageKey]);
+
   const handleSendMessage = async (text: string) => {
-    const userMessage: Message = { role: 'user', text, time: new Date().toLocaleTimeString() };
+    const userMessage: Message = { 
+      role: 'user', 
+      text, 
+      time: new Date().toLocaleTimeString() 
+    };
+    
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -24,10 +68,16 @@ const ChatPage = ({ theme, onToggleTheme }: ThemeProps) => {
       const data = await response.json();
 
       setMessages((prev) => {
-        const newMessages = [...prev];
-        newMessages[newMessages.length - 1].maskedText = data.masked_prompt;
-        newMessages[newMessages.length - 1].redactedEntities = data.redacted_entities;
-        return newMessages;
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (updated[lastIndex].role === 'user') {
+          updated[lastIndex] = {
+            ...updated[lastIndex],
+            maskedText: data.masked_prompt,
+            redactedEntities: data.redacted_entities
+          };
+        }
+        return updated;
       });
 
       const assistantMessage: Message = {
@@ -36,6 +86,7 @@ const ChatPage = ({ theme, onToggleTheme }: ThemeProps) => {
         time: new Date().toLocaleTimeString(),
         redactedEntities: data.redacted_entities
       };
+      
       setMessages((prev) => [...prev, assistantMessage]);
 
     } catch (error) {
@@ -51,10 +102,16 @@ const ChatPage = ({ theme, onToggleTheme }: ThemeProps) => {
   };
 
   return (
-      <div className="h-[calc(100vh-84px)]">
-        <Header theme={theme} onToggleTheme={onToggleTheme} />
-        <ChatBox messages={messages} onSendMessage={handleSendMessage} isLoading={isLoading} />
-      </div>
+    <div className="h-[calc(100vh-84px)] bg-background-light dark:bg-background-dark">
+      <Header theme={theme} onToggleTheme={onToggleTheme} />
+      <main className="mx-auto w-full max-w-4xl p-4">
+        <ChatBox 
+          messages={messages} 
+          onSendMessage={handleSendMessage} 
+          isLoading={isLoading} 
+        />
+      </main>
+    </div>
   );
 };
 
