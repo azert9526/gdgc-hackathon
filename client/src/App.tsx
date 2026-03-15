@@ -28,13 +28,9 @@ const Dashboard = ({ onMainPage, theme, onToggleTheme, onCreateSession }: { onMa
             </button>
           </div>
           
-          <div className="mb-8">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Privacy LLM Service</h1>
-            <p className="mt-2 text-slate-500 dark:text-slate-400 max-w-2xl">Run your encrypted local LLM container for sensitive data processing with privacy-first inference.</p>
-          </div>
-          
-          <div className="mb-8 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex gap-4"><button className="border-b-2 border-primary pb-4 text-sm font-bold text-primary">Privacy LLM</button></div>
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">Privacy LLM Service</h1>
+            <p className="mt-3 text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Run your encrypted local LLM container for sensitive data processing with privacy-first inference.</p>
           </div>
           
           <div className="grid grid-cols-1 gap-6 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1">
